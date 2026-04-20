@@ -1,8 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
-import "./Dashboard.jsx";
 
 const Login = () => {
   const [correoElectronico, setCorreoElectronico] = useState("");
@@ -18,27 +16,23 @@ const Login = () => {
     e.preventDefault();
 
     console.log("Datos enviados al backend", { email: correoElectronico, user_password });
-    console.log(correoElectronico)
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/users/login",
-        { correo_electronico: correoElectronico, user_password },
-        { withCredentials: true }
-      );
-      console.log(response.data);
+      const response = await fetch("http://localhost:3000/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo_electronico: correoElectronico, user_password }),
+        credentials: "include",
+      });
+      const data = await response.json();
+      console.log(data);
 
       // Redirigir al dashboard si el login es exitoso
-
-      if (response.status >= 200 && response.status < 300) {
-        // Verifica que el estado sea 200
-
-        console.log(response.status);
-
+      if (response.ok) {
         return navigate("/dashboard");
       }
-    } catch (error) {
-      console.error("Error en login", error.response?.data || error.message);
+    } catch (err) {
+      console.error("Error en login", err);
       setError("Correo o contraseña incorrectos");
     }
   };

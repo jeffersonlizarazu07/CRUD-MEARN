@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
-import axios from "axios";
-import EditarUsuarioModal from "./ActualizarUsuario"; // Asegúrate de que el nombre coincida
+import EditarUsuarioModal from "./ActualizarUsuario";
 import "../styles/Dashboard.css";
+
+const API_URL = "http://localhost:3000/users";
 
 const Dashboard = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -19,7 +20,8 @@ const Dashboard = () => {
 
   const buscarUsuarios = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3000/usuarios/");
+      const response = await fetch(API_URL, { credentials: "include" });
+      const data = await response.json();
       setUsuarios(data);
     } catch (error) {
       console.error("Error al obtener los usuarios:", error);
@@ -31,8 +33,11 @@ const Dashboard = () => {
     if (!confirmacion) return;
 
     try {
-      await axios.delete(`http://localhost:3001/usuarios/${id}`);
-      setUsuarios(usuarios.filter((usuario) => usuario.id !== id));
+      await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      setUsuarios(usuarios.filter((usuario) => usuario._id !== id));
       alert("Usuario eliminado exitosamente");
     } catch (error) {
       console.error("Error al eliminar el usuario:", error);
@@ -40,38 +45,37 @@ const Dashboard = () => {
   };
 
   const actualizarUsuario = async (usuarioActualizado) => {
-    if (!usuarioActualizado?.id) {
+    if (!usuarioActualizado?._id) {
       alert("Error: No se encontró el ID del usuario.");
       return;
     }
 
     try {
-      const response = await axios.put(
-        `http://localhost:3001/usuarios/${usuarioActualizado.id}`,
-        {
+      const response = await fetch(`${API_URL}/${usuarioActualizado._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           nombre: usuarioActualizado.nombre,
-          email: usuarioActualizado.email,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+          correo_electronico: usuarioActualizado.correo_electronico,
+        }),
+        credentials: "include",
+      });
 
-      if (response.status === 200) {
+      if (response.ok) {
         setUsuarios((prevUsuarios) =>
           prevUsuarios.map((usuario) =>
-            usuario.id === usuarioActualizado.id ? usuarioActualizado : usuario
+            usuario._id === usuarioActualizado._id ? usuarioActualizado : usuario
           )
         );
 
         setUsuarioSeleccionado(null);
         setModalOpen(false);
-        console.log(`✅ Usuario con ID ${usuarioActualizado.id} actualizado.`);
+        console.log(`Usuario actualizado.`);
       } else {
-        throw new Error("Error al actualizar el usuario en el servidor.");
+        throw new Error("Error al actualizar");
       }
     } catch (error) {
-      console.error("🚨 Error al actualizar el usuario:", error);
+      console.error("Error al actualizar:", error);
       alert("Hubo un problema al actualizar el usuario. Intenta nuevamente.");
     }
   };
@@ -83,11 +87,14 @@ const Dashboard = () => {
 
   const cerrarSesion = useCallback(async () => {
     try {
-      await axios.post("http://localhost:3001/usuarios/logout", {}, { withCredentials: true });
+      await fetch(`${API_URL}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
       alert("Sesión cerrada exitosamente.");
       navigate("/login", { replace: true });
     } catch (error) {
-      console.error("Error al cerrar sesión", error.response?.data || error.message);
+      console.error("Error al cerrar sesión", error);
     }
   }, [navigate]);
 
@@ -152,16 +159,15 @@ const Dashboard = () => {
             <tbody>
               {usuarios.length > 0 ? (
                 usuarios.map((usuario) => (
-                  <tr key={usuario.id}>
-                    <td>{usuario.id}</td>
+                  <tr key={usuario._id}>
+                    <td>{usuario._id}</td>
                     <td>{usuario.nombre}</td>
                     <td>{usuario.correo_electronico}</td>
-                    <td>{usuario.rol}</td>
                     <td>
                       <button className="btn btn-warning btn-sm" onClick={() => handleEditarUsuario(usuario)}>
                         ✏️
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => eliminarUsuario(usuario.id)}>
+                      <button className="btn btn-danger btn-sm" onClick={() => eliminarUsuario(usuario._id)}>
                         🗑️
                       </button>
                     </td>
@@ -169,7 +175,7 @@ const Dashboard = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5">No hay usuarios registrados</td>
+                  <td colSpan="4">No hay usuarios registrados</td>
                 </tr>
               )}
             </tbody>

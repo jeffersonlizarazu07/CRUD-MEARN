@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
-import './Dashboard.jsx'
-import '../styles/Register.css'; // Correcto
-import Login from './Login.jsx';
+import '../styles/Register.css';
 
 
 const Register = () => {
@@ -32,26 +29,23 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/users', { nombre, correo_electronico: correoElectronico, user_password }, { withCredentials: true });
-
-      console.log(response.data);
+      const response = await fetch('http://localhost:3000/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, correo_electronico: correoElectronico, user_password }),
+        credentials: 'include',
+      });
+      const data = await response.json();
+      console.log(data);
 
       // Redirigir al login si el registro fue exitoso
-      if (response.status >= 200 && response.status < 300) {
-        console.log(response.status);
+      if (response.ok) {
         return navigate('/login');
       }
-    } catch (error) {
-      console.error('Error en el registro', error.response?.data || error.message);
-
-      // Mostrar mensaje de error específico si el correo ya está registrado
-      if (error.response?.data?.message === 'El correo electrónico ya está registrado') {
-        setError('Este correo electrónico ya está registrado.');
-      } else {
-        setError('Error al registrarse. Intente nuevamente.');
-      }
-
-    };
+    } catch (err) {
+      console.error('Error en el registro', err);
+      setError('Error al registrarse. Intente nuevamente.');
+    }
   };
 
   return (

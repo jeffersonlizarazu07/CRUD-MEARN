@@ -1,25 +1,24 @@
 import { Outlet, Navigate } from "react-router-dom";
-import axios from "axios";
 import { useEffect, useState } from "react";
+
+const API_URL = "http://localhost:3000/users";
 
 const RutasProtegidas = () => {
   const [autenticado, setAutenticado] = useState(null);
-  const [ejecutarEfecto] = useState(true);
 
   useEffect(() => {
-    if (!ejecutarEfecto) return;
-
     let cancelado = false;
 
     const verificarAuth = async () => {
       try {
-        await axios.get("http://localhost:20/users/verify", { withCredentials: true });
-        if (!cancelado) setAutenticado(true);
+        const response = await fetch(`${API_URL}/verify`, {
+          credentials: "include",
+        });
+        if (!cancelado && response.ok) setAutenticado(true);
+        else if (!cancelado) setAutenticado(false);
       } catch (error) {
         if (!cancelado) {
-          if (error.response?.status === 401) {
-            console.warn("Sesión expirada o usuario no autenticado.");
-          }
+          console.warn("Sesión expirada o usuario no autenticado.");
           setAutenticado(false);
         }
       }
@@ -30,7 +29,7 @@ const RutasProtegidas = () => {
     return () => {
       cancelado = true;
     };
-  }, [ejecutarEfecto]);
+  }, []);
 
   if (autenticado === null) return <p>Cargando...</p>;
   
