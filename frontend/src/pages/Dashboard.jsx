@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { API_URL } from "../auth/api";
 import EditarUsuarioModal from "./ActualizarUsuario";
 import "../styles/Dashboard.css";
-
-const API_URL = "http://localhost:3000/users";
 
 const Dashboard = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -98,31 +97,25 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    const manejarHistorial = () => cerrarSesion();
-    window.addEventListener("popstate", manejarHistorial);
-    return () => window.removeEventListener("popstate", manejarHistorial);
-  }, [cerrarSesion]);
-
   return (
     <div className="d-flex">
       <div className="sidebar">
         <h4>Panel Administrativo</h4>
         <ul className="nav flex-column mt-4">
           <li className="nav-item">
-            <a className="nav-link" href="#">
+            <span className="nav-link">
               <DashboardIcon className="dashboard-icon" /> Dashboard
-            </a>
+            </span>
           </li>
           <li className="nav-item">
-            <a className="nav-link" href="#">
+            <span className="nav-link">
               <AccountCircleIcon className="user-icon" /> Usuario
-            </a>
+            </span>
           </li>
           <li className="nav-item">
-            <a className="nav-link" href="#">
+            <span className="nav-link">
               <SettingsIcon className="settings-icon" /> Configuración
-            </a>
+            </span>
           </li>
         </ul>
       </div>
