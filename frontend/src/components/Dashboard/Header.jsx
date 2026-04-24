@@ -4,15 +4,13 @@ const Header = ({ onLogout }) => {
   const navigate = useNavigate();
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
-      <div className="container-fluid">
-        <span className="navbar-brand" onClick={() => navigate("/dashboard")}>
-          Dashboard
-        </span>
-        <button className="btn btn-outline-danger" onClick={onLogout}>
-          Cerrar Sesión
-        </button>
-      </div>
+    <nav className="navbar">
+      <span className="navbar-brand" onClick={() => navigate("/dashboard")}>
+        Dashboard
+      </span>
+      <button className="btn-outline-danger" onClick={onLogout}>
+        Cerrar Sesión
+      </button>
     </nav>
   );
 };

@@ -2,30 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../auth/api';
 import '../styles/Login.css';
-import '../styles/Register.css';
-
 
 const Register = () => {
-
-  const [nombre, setNombre] = useState('');
-  const [correoElectronico, setCorreoElectronico] = useState('');
-  const [user_password, setPassword] = useState('');
+  const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const btnLogin = () => {
-    navigate("/login"); // Redirige a la página de login
+    navigate("/login");
   };
-
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    console.log("Datos enviados al backend", { nombre, correo_electronico: correoElectronico, user_password });
-
-    // Validación campos
-    if (!nombre || !correoElectronico || !user_password) {
-      setError('Todos los campos son obligatorios.');
+    if (!userName || !email || !userPassword) {
+      setError('Todos los campos son obligatorios');
       return;
     }
 
@@ -33,72 +26,83 @@ const Register = () => {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, correo_electronico: correoElectronico, user_password }),
+        body: JSON.stringify({ nombre: userName, correo_electronico: email, user_password: userPassword }),
         credentials: 'include',
       });
-      const data = await response.json();
-      console.log(data);
 
-      // Redirigir al login si el registro fue exitoso
       if (response.ok) {
         return navigate('/login');
       }
+      
+      setError('Error al registrarse. Intenta nuevamente');
     } catch (err) {
-      console.error('Error en el registro', err);
-      setError('Error al registrarse. Intente nuevamente.');
+      console.error('Error en registro', err);
+      setError('Error de conexión');
     }
   };
 
   return (
     <div className="login-container">
       <div className="card">
-        <h3 className="text-center mb-4">Registro</h3>
+        <h3 className="text-center">Crear cuenta</h3>
 
-        {error && <div className="alert alert-danger" role="alert">{error}</div>}
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleRegister}>
-          <div className="form-group mb-2">
-            <label htmlFor="nombre">Nombre</label>
+          <div className="form-group">
+            <label htmlFor="nombre">Nombre completo</label>
             <input
               type="text"
               className="form-control"
               id="nombre"
-              placeholder="Nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Juan Pérez"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
               required
             />
           </div>
 
-          <div className="form-group mb-2">
-            <label htmlFor="email">Correo</label>
+          <div className="form-group">
+            <label htmlFor="email">Correo electrónico</label>
             <input
               type="email"
               className="form-control"
               id="email"
-              placeholder="Correo"
-              value={correoElectronico}
-              onChange={(e) => setCorreoElectronico(e.target.value)}
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          <div className="form-group mb-4">
+          <div className="form-group">
             <label htmlFor="password">Contraseña</label>
             <input
               type="password"
               className="form-control"
               id="password"
-              placeholder="Contraseña"
-              value={user_password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              value={userPassword}
+              onChange={(e) => setUserPassword(e.target.value)}
               required
             />
           </div>
 
-          <button type="submit" className="btn btn-secundary btn-block w-100" onClick={btnLogin}>Iniciar Sesión</button>
+          <button type="submit" className="btn btn-primary">
+            Registrarse
+          </button>
 
-          <button type="submit" className="btn btn-primary btn-block w-100">Registrarse</button>
+          <button 
+            type="button" 
+            className="btn btn-secundary"
+            onClick={btnLogin}
+          >
+            Ya tengo cuenta
+          </button>
         </form>
       </div>
     </div>

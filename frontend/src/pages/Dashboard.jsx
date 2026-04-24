@@ -1,33 +1,48 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import SettingsIcon from "@mui/icons-material/Settings";
 import { API_URL } from "../auth/api";
-import EditarUsuarioModal from "./ActualizarUsuario";
+import { UserUpdate } from "./UserUpdate";
+import { Sidebar, Header, UserTable, SearchBar } from "../components/Dashboard";
 import "../styles/Dashboard.css";
 
+const getCurrentDate = () => {
+  const now = new Date();
+  return now.toLocaleDateString("es-ES", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 const Dashboard = () => {
-  const [usuarios, setUsuarios] = useState([]);
+  const [users, setUsers] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [userSelect, setUserSelect] = useState(null);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
+  // ============================================
+  // EFECTO: Cargar usuarios al montar componente
+  // ============================================
   useEffect(() => {
-    buscarUsuarios();
+    usersSearch();
   }, []);
 
-  const buscarUsuarios = async () => {
+  // ============================================
+  // FUNCIONES API
+  // ============================================
+  const usersSearch = async () => {
     try {
       const response = await fetch(API_URL, { credentials: "include" });
       const data = await response.json();
-      setUsuarios(data);
+      setUsers(data);
     } catch (error) {
-      console.error("Error al obtener los usuarios:", error);
+      console.error("Error al obtener usuarios:", error);
     }
   };
 
-  const eliminarUsuario = async (id) => {
+  const userDelete = async (id) => {
     const confirmacion = window.confirm("¿Desea eliminar este usuario?");
     if (!confirmacion) return;
 
@@ -36,152 +51,130 @@ const Dashboard = () => {
         method: "DELETE",
         credentials: "include",
       });
-      setUsuarios(usuarios.filter((usuario) => usuario._id !== id));
+      setUsers((prev) => prev.filter((u) => u._id !== id));
       alert("Usuario eliminado exitosamente");
     } catch (error) {
-      console.error("Error al eliminar el usuario:", error);
+      console.error("Error al eliminar:", error);
     }
   };
 
-  const actualizarUsuario = async (usuarioActualizado) => {
-    if (!usuarioActualizado?._id) {
+  const userUpdate = async (userUpdated) => {
+    if (!userUpdated?._id) {
       alert("Error: No se encontró el ID del usuario.");
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/${usuarioActualizado._id}`, {
+      const response = await fetch(`${API_URL}/${userUpdated._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre: usuarioActualizado.nombre,
-          correo_electronico: usuarioActualizado.correo_electronico,
+          nombre: userUpdated.nombre,
+          correo_electronico: userUpdated.correo_electronico,
         }),
         credentials: "include",
       });
 
-      if (response.ok) {
-        setUsuarios((prevUsuarios) =>
-          prevUsuarios.map((usuario) =>
-            usuario._id === usuarioActualizado._id ? usuarioActualizado : usuario
-          )
-        );
+      if (!response.ok) throw new Error("Error al actualizar");
 
-        setUsuarioSeleccionado(null);
-        setModalOpen(false);
-        console.log(`Usuario actualizado.`);
-      } else {
-        throw new Error("Error al actualizar");
-      }
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userUpdated._id ? userUpdated : u)),
+      );
+      setModalOpen(false);
+      setUserSelect(null);
     } catch (error) {
-      console.error("Error al actualizar:", error);
-      alert("Hubo un problema al actualizar el usuario. Intenta nuevamente.");
+      console.error("Error:", error);
+      alert("Hubo un problema al actualizar. Intenta nuevamente.");
     }
   };
 
-  const handleEditarUsuario = (usuario) => {
-    setUsuarioSeleccionado(usuario);
+  // ============================================
+  // HANDLERS
+  // ============================================
+  const handleEditar = (usuario) => {
+    setUserSelect(usuario);
     setModalOpen(true);
   };
 
-  const cerrarSesion = useCallback(async () => {
+  const handleBuscar = useCallback((valor) => {
+    setSearch(valor);
+  }, []);
+
+  const handleCerrarSesion = useCallback(async () => {
     try {
       await fetch(`${API_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });
-      alert("Sesión cerrada exitosamente.");
+      alert("Sesión cerrada.");
       navigate("/login", { replace: true });
     } catch (error) {
-      console.error("Error al cerrar sesión", error);
+      console.error("Error al cerrar sesión:", error);
     }
   }, [navigate]);
 
+  // ============================================
+  // RENDER
+  // ============================================
+  const usersFiltered = search
+    ? users.filter(
+        (u) =>
+          u.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+          u.correo_electronico?.toLowerCase().includes(search.toLowerCase()),
+      )
+    : users;
+
   return (
     <div className="d-flex">
-      <div className="sidebar">
-        <h4>Panel Administrativo</h4>
-        <ul className="nav flex-column mt-4">
-          <li className="nav-item">
-            <span className="nav-link">
-              <DashboardIcon className="dashboard-icon" /> Dashboard
-            </span>
-          </li>
-          <li className="nav-item">
-            <span className="nav-link">
-              <AccountCircleIcon className="user-icon" /> Usuario
-            </span>
-          </li>
-          <li className="nav-item">
-            <span className="nav-link">
-              <SettingsIcon className="settings-icon" /> Configuración
-            </span>
-          </li>
-        </ul>
-      </div>
+      <Sidebar />
 
-      <div className="container-fluid p-4">
-        <nav className="navbar navbar-expand-lg navbar-light bg-light">
-          <div className="container-fluid">
-            <span className="navbar-brand" onClick={() => navigate("/dashboard")}>
-              Dashboard
-            </span>
-            <button className="btn btn-outline-danger" onClick={cerrarSesion}>
-              Cerrar Sesión
-            </button>
+      <div className="flex-grow-1">
+        <Header onLogout={handleCerrarSesion} />
+
+        {/* Welcome Header */}
+        <div className="welcome-header">
+          <div className="welcome-content">
+            <h1>Bienvenido de nuevo</h1>
+            <p>Gestión de usuarios</p>
           </div>
-        </nav>
-
-        <h2 className="mb-3">Gestión de Usuarios</h2>
-        <div className="d-flex justify-content-between mb-3">
-          <button className="btn btn-success">Agregar Usuario</button>
-          <input type="text" className="form-control w-25" placeholder="Buscar..." />
+          <div className="current-date">{getCurrentDate()}</div>
         </div>
 
-        <div className="table-responsive">
-          <table className="table table-hover table-striped">
-            <thead className="table-dark">
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuarios.length > 0 ? (
-                usuarios.map((usuario) => (
-                  <tr key={usuario._id}>
-                    <td>{usuario._id}</td>
-                    <td>{usuario.nombre}</td>
-                    <td>{usuario.correo_electronico}</td>
-                    <td>
-                      <button className="btn btn-warning btn-sm" onClick={() => handleEditarUsuario(usuario)}>
-                        ✏️
-                      </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => eliminarUsuario(usuario._id)}>
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4">No hay usuarios registrados</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/* Quick Actions */}
+        <div className="quick-actions">
+          <button
+            className="action-card add-user"
+            onClick={() => alert("Crear usuario")}
+          >
+            <h3>Agregar</h3>
+            <div className="action-value">+ Usuario</div>
+          </button>
+          <button className="action-card" onClick={() => navigate("/")}>
+            <h3>Registros</h3>
+            <div className="action-value">{users.length}</div>
+          </button>
+          <button className="action-card" onClick={() => alert("Exportar")}>
+            <h3>Exportar</h3>
+            <div className="action-value">CSV</div>
+          </button>
         </div>
+
+        <UserTable
+          usuarios={usersFiltered}
+          onEdit={handleEditar}
+          onDelete={userDelete}
+          onAdd={() => alert("Funcionalidad pendiente")}
+          searchBar={
+            <SearchBar value={search} onChange={handleBuscar} onSearch={true} />
+          }
+        />
       </div>
 
-      {/* Modal de edición */}
       {modalOpen && (
-        <EditarUsuarioModal
-          usuario={usuarioSeleccionado}
+        <UserUpdate
+          usuario={userSelect}
           onClose={() => setModalOpen(false)}
-          onSave={actualizarUsuario}
+          onSave={userUpdate}
         />
       )}
     </div>
