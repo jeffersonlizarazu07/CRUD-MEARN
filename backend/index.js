@@ -9,7 +9,7 @@ import { connectDB } from './database/db.js';
 const app = express();
 
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   methods: 'GET,POST,PUT,DELETE',
   credentials: true,
 };
@@ -32,7 +32,7 @@ const startServer = async () => {
   // Rutas
   app.use('/users', userRoutes);
 
-  const PORT = 3000;
+  const PORT = 3001;
   app.listen(PORT, () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
   });
