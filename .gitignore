@@ -32,3 +32,5 @@ skills-lock.json
 # Environment
 .env
 .env.*
+frontend/CLAUDE.md
+frontend/src/assets/diseño_crud.avif
